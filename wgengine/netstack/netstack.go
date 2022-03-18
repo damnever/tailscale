@@ -382,17 +382,12 @@ func (ns *Impl) injectOutbound() {
 			ns.logf("[v2] ReadContext-for-write = ok=false")
 			continue
 		}
-		hdrNetwork := pkt.NetworkHeader()
-		hdrTransport := pkt.TransportHeader()
 
-		full := make([]byte, 0, pkt.Size())
-		full = append(full, hdrNetwork.View()...)
-		full = append(full, hdrTransport.View()...)
-		full = append(full, pkt.Data().AsRange().AsView()...)
 		if debugPackets {
-			ns.logf("[v2] packet Write out: % x", full)
+			ns.logf("[v2] packet Write out: % x", stack.PayloadSince(pkt.NetworkHeader()))
 		}
-		if err := ns.tundev.InjectOutbound(full); err != nil {
+
+		if err := ns.tundev.InjectOutboundPacketBuffer(pkt); err != nil {
 			log.Printf("netstack inject outbound: %v", err)
 			return
 		}
